@@ -1,0 +1,77 @@
+NOTICE
+
+Roslyn Syntax Highlighter for Visual Studio Code
+Copyright (c) 2025 Pablo Gabriel Mederos
+
+This project provides semantic syntax highlighting for C# using Microsoft's Roslyn compiler platform.
+
+================================================================================
+
+AUTHOR INFORMATION
+================================================================================
+
+Project Creator and Lead Developer: Pablo Gabriel Mederos
+Email: contacto@pablomederos.dev
+Year: 2025
+Project Start Date: December 2025
+
+================================================================================
+
+THIRD-PARTY DEPENDENCIES
+================================================================================
+
+This software uses the following third-party libraries and tools:
+
+1. Microsoft.CodeAnalysis.CSharp (Roslyn)
+   - Copyright (c) .NET Foundation and Contributors
+   - License: MIT
+   - Used for: C# syntax analysis and parsing
+   - https://github.com/dotnet/roslyn
+
+2. Visual Studio Code Extension API
+   - Copyright (c) Microsoft Corporation
+   - License: MIT
+   - Used for: VS Code extension development
+   - https://code.visualstudio.com/api
+
+3. xUnit.net
+   - Copyright (c) .NET Foundation and Contributors
+   - License: Apache 2.0
+   - Used for: Unit testing
+   - https://xunit.net/
+
+4. TypeScript
+   - Copyright (c) Microsoft Corporation
+   - License: Apache 2.0
+   - Used for: Extension frontend development
+   - https://www.typescriptlang.org/
+
+================================================================================
+
+ARCHITECTURE
+================================================================================
+
+This extension uses a sidecar architecture with two main components:
+
+- Frontend: TypeScript-based VS Code extension
+- Backend: C# console application using Roslyn for semantic analysis
+
+Communication between components uses a custom length-prefixed protocol over
+stdin/stdout.
+
+================================================================================
+
+ACKNOWLEDGMENTS
+================================================================================
+
+Special thanks to:
+- The Roslyn team at Microsoft for providing the compiler platform
+- The VS Code team for the excellent extension API
+- The .NET community for comprehensive documentation and examples
+
+================================================================================
+
+For more information, see:
+- README.md for project overview and usage
+- LICENSE for full license text
+- LEGEND.md for token type mappings

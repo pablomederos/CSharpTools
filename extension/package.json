@@ -3,6 +3,7 @@
   "displayName": "CSharpTools",
   "description": "CSharp Language Support",
   "version": "0.0.1",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.106.1"
   },
