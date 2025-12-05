@@ -97,6 +97,66 @@
 - [ ] Probar instalación en VS Code limpio
 - [ ] Publicar en VS Code Marketplace
 
+### Mejoras al Resaltado de Sintaxis Actual (Prioridad)
+
+- [ ] Mejorar detección de tipos genéricos (`List<T>`, `Dictionary<K,V>`)
+- [ ] Resaltar atributos (`[Serializable]`, `[HttpGet]`)
+- [ ] Detectar delegates y events
+- [ ] Resaltar expresiones lambda
+- [ ] Detectar local functions
+- [ ] Mejorar detección de tipos en using statements
+- [ ] Resaltar keywords contextuales (var, dynamic, async, await)
+- [ ] Detectar record types y record structs
+- [ ] Resaltar pattern matching
+- [ ] Mejorar detección de propiedades auto-implementadas
+
+### Evolución a Language Server Completo (Futuro - No Prioritario)
+
+> [!NOTE]
+> Esta sección documenta el roadmap para evolucionar la extensión a un Language Server completo.
+> **NO es prioritario ahora** - primero hay que mejorar el resaltado de sintaxis actual.
+> Ver `docs/command_protocol_design.md` para detalles técnicos completos.
+
+#### Fase 1: Protocolo de Comandos
+- [ ] Refactorizar protocolo a Request/Response con IDs
+- [ ] Implementar `CommandRouter` en backend
+- [ ] Implementar `LanguageServerClient` en frontend
+- [ ] Migrar comando `analyze` (mantener compatibilidad)
+- [ ] Agregar manejo de errores estructurado
+
+#### Fase 2: Diagnósticos
+- [ ] Implementar comando `diagnose`
+- [ ] Usar Roslyn para obtener errores y warnings
+- [ ] Registrar `DiagnosticProvider` en VS Code
+- [ ] Mostrar squiggles en el editor
+- [ ] Quick fixes básicos
+
+#### Fase 3: Compilación
+- [ ] Implementar comando `compile`
+- [ ] Integrar con MSBuild/dotnet build
+- [ ] Agregar task de build en VS Code
+- [ ] Mostrar output de compilación
+- [ ] Detectar errores de compilación
+
+#### Fase 4: Gestión de Proyectos
+- [ ] Implementar comando `createProject`
+- [ ] Implementar comando `dotnetCli`
+- [ ] Comandos VS Code para crear proyectos
+- [ ] Gestión de variables de entorno
+- [ ] Integración con dotnet CLI completa
+
+#### Fase 5: Features Avanzados
+- [ ] Autocompletado (IntelliSense)
+- [ ] Go to Definition
+- [ ] Find All References
+- [ ] Rename Symbol
+- [ ] Code Actions (refactorings)
+
+#### Fase 6: Migración a LSP (Opcional)
+- [ ] Evaluar migración a Language Server Protocol estándar
+- [ ] Usar biblioteca LSP de Microsoft
+- [ ] Compatibilidad con otros editores (Vim, Emacs, etc.)
+
 ### Mejoras Futuras (No Críticas)
 
 #### Heartbeat

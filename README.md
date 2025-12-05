@@ -129,6 +129,20 @@ The extension highlights the following C# constructs:
 - The extension will automatically restart the backend with exponential backoff
 - Check stderr output in the Output panel for error details
 
+## Documentation
+
+- **[roadmap.md](roadmap.md)** - Project roadmap and future plans
+- **[docs/LEGEND.md](docs/LEGEND.md)** - Token type mappings (critical for development)
+- **[docs/command_protocol_design.md](docs/command_protocol_design.md)** - Future Language Server design
+
+## Contributing
+
+Before contributing:
+1. Read [roadmap.md](roadmap.md) to understand current priorities
+2. Review [docs/LEGEND.md](docs/LEGEND.md) if adding new token types
+3. Ensure tests pass: `dotnet test` (backend) and `npm run compile` (frontend)
+4. Keep C# and TypeScript token legends synchronized
+
 ## License
 
 MIT
