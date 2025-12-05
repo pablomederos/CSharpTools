@@ -1,0 +1,147 @@
+{
+  "name": "csharptools",
+  "displayName": "CSharpTools",
+  "description": "CSharp Language Support",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:csharp"
+  ],
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "csharp",
+        "aliases": [
+          "Visual C Sharp",
+          "csharp"
+        ],
+        "extensions": [
+          "cs",
+          "csx"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "csharp",
+        "scopeName": "source.cs",
+        "path": "./syntaxes/csharp.tmLanguage.json"
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "class",
+        "description": "A class"
+      },
+      {
+        "id": "interface",
+        "description": "An interface"
+      },
+      {
+        "id": "enum",
+        "description": "An enumeration"
+      },
+      {
+        "id": "struct",
+        "description": "A struct"
+      },
+      {
+        "id": "method",
+        "description": "A method"
+      },
+      {
+        "id": "property",
+        "description": "A property"
+      },
+      {
+        "id": "variable",
+        "description": "A variable"
+      },
+      {
+        "id": "parameter",
+        "description": "A parameter"
+      },
+      {
+        "id": "namespace",
+        "description": "A namespace"
+      },
+      {
+        "id": "type",
+        "description": "A type"
+      }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "declaration",
+        "description": "Declaration of a symbol"
+      },
+      {
+        "id": "static",
+        "description": "Static member"
+      },
+      {
+        "id": "readonly",
+        "description": "Readonly member"
+      },
+      {
+        "id": "abstract",
+        "description": "Abstract member"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "class": [
+            "entity.name.type.class.cs"
+          ]
+        }
+      },
+      {
+        "scopes": {
+          "interface": [
+            "entity.name.type.interface.cs"
+          ]
+        }
+      },
+      {
+        "scopes": {
+          "enum": [
+            "entity.name.type.enum.cs"
+          ]
+        }
+      },
+      {
+        "scopes": {
+          "method": [
+            "entity.name.function.cs"
+          ]
+        }
+      },
+      {
+        "scopes": {
+          "property": [
+            "entity.name.variable.property.cs"
+          ]
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.106.1",
+    "@types/node": "^20.x",
+    "typescript": "^5.3.0"
+  }
+}

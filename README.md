@@ -1,65 +1,141 @@
-# csharptools README
+# Roslyn Syntax Highlighter
 
-This is the README for your extension "csharptools". After writing up a brief description, we recommend including the following sections.
+A Visual Studio Code extension that provides **precise semantic highlighting** for C# using Microsoft's Roslyn compiler platform.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Accurate Syntax Analysis**: Uses Roslyn's real C# parser instead of regex-based TextMate grammars
+- **Semantic Token Support**: Highlights classes, interfaces, methods, properties, variables, and more
+- **Modifier Detection**: Distinguishes static, readonly, and abstract members
+- **Error Tolerant**: Provides partial highlighting even for code with syntax errors
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- **.NET SDK 6.0 or higher** must be installed on your system
+- The extension will automatically detect and verify your .NET installation
 
-## Extension Settings
+### Installing .NET
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+If you don't have .NET installed:
+- **Linux**: `sudo apt install dotnet-sdk-8.0` (Ubuntu/Debian) or visit [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
+- **macOS**: `brew install dotnet` or download from [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
+- **Windows**: Download from [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
 
-For example:
+## Architecture
 
-This extension contributes the following settings:
+This extension uses a **sidecar architecture** with two components:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+### Frontend (TypeScript)
+- VS Code extension that registers a `DocumentSemanticTokensProvider`
+- Manages the lifecycle of the backend analyzer process
+- Communicates via stdin/stdout using a length-prefixed protocol
 
-## Known Issues
+### Backend (C#)
+- .NET console application using `Microsoft.CodeAnalysis.CSharp` (Roslyn)
+- Parses C# code into a syntax tree
+- Walks the tree to extract semantic tokens
+- Returns tokens as JSON
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Development
 
-## Release Notes
+### Project Structure
 
-Users appreciate release notes as you update your extension.
+```
+CSharpTools/
+├── extension/          # VS Code extension (TypeScript)
+│   ├── src/
+│   │   ├── extension.ts    # Entry point, process management
+│   │   ├── provider.ts     # Semantic tokens provider
+│   │   └── utils.ts        # Protocol and validation utilities
+│   └── package.json
+│
+└── analyzer/           # Roslyn analyzer (C#)
+    ├── src/
+    │   ├── Program.cs          # stdin/stdout communication
+    │   ├── Core/
+    │   │   ├── TokenWalker.cs  # Syntax tree visitor
+    │   │   └── TokenMapper.cs  # Token legend mapping
+    │   └── Models/
+    │       └── SemanticTokenDto.cs
+    └── tests/
+        └── WalkerTests.cs
+```
 
-### 1.0.0
+### Building
 
-Initial release of ...
+```bash
+# Build backend
+cd analyzer
+dotnet build
 
-### 1.0.1
+# Build frontend
+cd extension
+npm install
+npm run compile
+```
 
-Fixed issue #.
+### Testing
 
-### 1.1.0
+```bash
+# Run backend tests
+cd analyzer
+dotnet test
 
-Added features X, Y, and Z.
+# Debug extension
+# Open the project in VS Code and press F5
+```
 
----
+## How It Works
 
-## Working with Markdown
+1. When you open a `.cs` file, VS Code activates the extension
+2. The extension spawns the backend analyzer process (`dotnet run`)
+3. For each file, the frontend sends the C# code to the backend via stdin
+4. The backend parses the code with Roslyn and extracts semantic tokens
+5. Tokens are returned as JSON and converted to VS Code's format
+6. VS Code applies the semantic highlighting
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+## Token Types
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+The extension highlights the following C# constructs:
 
-## For more information
+- **class** - Class declarations
+- **interface** - Interface declarations  
+- **enum** - Enumeration declarations
+- **struct** - Struct declarations
+- **method** - Method declarations
+- **property** - Property declarations
+- **variable** - Variable declarations
+- **parameter** - Parameter declarations
+- **namespace** - Namespace declarations
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+## Token Modifiers
 
-**Enjoy!**
+- **declaration** - Symbol is being declared
+- **static** - Static member
+- **readonly** - Readonly member
+- **abstract** - Abstract member
+
+## Troubleshooting
+
+### Extension doesn't activate
+- Check that .NET SDK 6.0+ is installed: `dotnet --version`
+- Check the Output panel → "Roslyn Syntax Highlighter" for errors
+
+### No highlighting appears
+- Ensure the backend process started successfully (check Output panel)
+- Try reloading VS Code window (Ctrl+Shift+P → "Reload Window")
+
+### Backend crashes
+- The extension will automatically restart the backend with exponential backoff
+- Check stderr output in the Output panel for error details
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please ensure:
+- Backend tests pass: `dotnet test`
+- TypeScript compiles without errors: `npm run compile`
+- Token legend stays synchronized between C# and TypeScript (see `LEGEND.md`)
