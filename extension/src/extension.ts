@@ -1,106 +1,98 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
-import { checkDotnetInstalled } from './utils';
-import { RoslynSemanticTokensProvider } from './provider';
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    TransportKind
+} from 'vscode-languageclient/node';
 
-let backendProcess: ChildProcess | null = null;
-let outputChannel: vscode.OutputChannel;
-let retryDelay = 1000;
-const MAX_RETRY_DELAY = 30000;
+let client: LanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
-    outputChannel = vscode.window.createOutputChannel('Roslyn Syntax Highlighter');
+    const outputChannel = vscode.window.createOutputChannel('Roslyn Semantic Highlighter');
     outputChannel.appendLine('[INFO] Extension activating...');
 
-    const dotnetAvailable = await checkDotnetInstalled();
-    if (!dotnetAvailable) {
-        outputChannel.appendLine('[ERROR] .NET SDK not available, extension will not activate');
+    // Check if .NET is installed
+    try {
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
+        
+        const { stdout } = await execAsync('dotnet --version');
+        const version = stdout.trim();
+        outputChannel.appendLine(`[INFO] .NET SDK detected: ${version}`);
+        
+        const [major] = version.split('.').map(Number);
+        if (major < 6) {
+            vscode.window.showErrorMessage(
+                `Roslyn Semantic Highlighter requires .NET 6.0 or higher, found ${version}`,
+                'Install .NET'
+            ).then(selection => {
+                if (selection === 'Install .NET') {
+                    vscode.env.openExternal(vscode.Uri.parse('https://dotnet.microsoft.com/download'));
+                }
+            });
+            return;
+        }
+    } catch (err) {
+        vscode.window.showErrorMessage(
+            'Roslyn Semantic Highlighter requires .NET SDK. Please install it to use this extension.',
+            'Install .NET'
+        ).then(selection => {
+            if (selection === 'Install .NET') {
+                vscode.env.openExternal(vscode.Uri.parse('https://dotnet.microsoft.com/download'));
+            }
+        });
         return;
     }
 
-    outputChannel.appendLine('[INFO] .NET SDK detected');
-
+    // Configure the language server
     const analyzerPath = path.join(context.extensionPath, '..', 'analyzer', 'src', 'RoslynAnalyzer.csproj');
     
-    startBackend(analyzerPath);
-
-    if (backendProcess) {
-        const provider = new RoslynSemanticTokensProvider(backendProcess, outputChannel);
-        
-        context.subscriptions.push(
-            vscode.languages.registerDocumentSemanticTokensProvider(
-                { language: 'csharp' },
-                provider,
-                RoslynSemanticTokensProvider.legend
-            )
-        );
-
-        outputChannel.appendLine('[INFO] Semantic tokens provider registered');
-    }
-}
-
-function startBackend(projectPath: string) {
-    try {
-        outputChannel.appendLine(`[INFO] Starting backend: dotnet run --project ${projectPath}`);
-        
-        backendProcess = spawn('dotnet', ['run', '--project', projectPath], {
-            stdio: ['pipe', 'pipe', 'pipe']
-        });
-
-        backendProcess.on('error', (err) => {
-            outputChannel.appendLine(`[ERROR] Backend process error: ${err.message}`);
-            scheduleRestart(projectPath);
-        });
-
-        backendProcess.on('exit', (code, signal) => {
-            if (code !== 0 && code !== null) {
-                outputChannel.appendLine(`[ERROR] Backend exited with code ${code}`);
-                scheduleRestart(projectPath);
-            } else if (signal) {
-                outputChannel.appendLine(`[INFO] Backend terminated with signal ${signal}`);
-            }
-        });
-
-        if (backendProcess.stderr) {
-            backendProcess.stderr.on('data', (data) => {
-                outputChannel.appendLine(`[BACKEND] ${data.toString().trim()}`);
-            });
+    const serverOptions: ServerOptions = {
+        command: 'dotnet',
+        args: ['run', '--project', analyzerPath],
+        transport: TransportKind.stdio,
+        options: {
+            env: process.env
         }
+    };
 
-        retryDelay = 1000;
-        outputChannel.appendLine('[INFO] Backend process started successfully');
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [
+            { scheme: 'file', language: 'csharp' }
+        ],
+        synchronize: {
+            fileEvents: vscode.workspace.createFileSystemWatcher('**/*.cs')
+        },
+        outputChannel: outputChannel
+    };
+
+    // Create and start the language client
+    client = new LanguageClient(
+        'roslynSemanticHighlighter',
+        'Roslyn Semantic Highlighter',
+        serverOptions,
+        clientOptions
+    );
+
+    outputChannel.appendLine('[INFO] Starting language server...');
+    
+    try {
+        await client.start();
+        outputChannel.appendLine('[INFO] Language server started successfully');
     } catch (err) {
         const error = err as Error;
-        outputChannel.appendLine(`[ERROR] Failed to start backend: ${error.message}`);
-        scheduleRestart(projectPath);
+        outputChannel.appendLine(`[ERROR] Failed to start language server: ${error.message}`);
+        vscode.window.showErrorMessage(
+            'Roslyn Semantic Highlighter: Failed to start language server. Check the output channel for details.'
+        );
     }
 }
 
-function scheduleRestart(projectPath: string) {
-    outputChannel.appendLine(`[INFO] Scheduling restart in ${retryDelay}ms`);
-    
-    setTimeout(() => {
-        startBackend(projectPath);
-    }, retryDelay);
-    
-    retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY);
-}
-
-export function deactivate() {
-    outputChannel.appendLine('[INFO] Extension deactivating...');
-    
-    if (backendProcess) {
-        outputChannel.appendLine('[INFO] Terminating backend process');
-        backendProcess.kill('SIGTERM');
-        
-        setTimeout(() => {
-            if (backendProcess && !backendProcess.killed) {
-                outputChannel.appendLine('[WARN] Force killing backend process');
-                backendProcess.kill('SIGKILL');
-            }
-        }, 5000);
-        
-        backendProcess = null;
+export async function deactivate(): Promise<void> {
+    if (client) {
+        return client.stop();
     }
 }

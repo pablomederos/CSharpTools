@@ -23,18 +23,24 @@ If you don't have .NET installed:
 
 ## Architecture
 
-This extension uses a **sidecar architecture** with two components:
+This extension uses the **Language Server Protocol (LSP)** standard with official libraries:
 
 ### Frontend (TypeScript)
-- VS Code extension that registers a `DocumentSemanticTokensProvider`
-- Manages the lifecycle of the backend analyzer process
-- Communicates via stdin/stdout using a length-prefixed protocol
+- VS Code extension using `vscode-languageclient`
+- Automatic process management and communication
+- Handles reconnection and error recovery
+- Zero manual protocol handling required
 
 ### Backend (C#)
-- .NET console application using `Microsoft.CodeAnalysis.CSharp` (Roslyn)
-- Parses C# code into a syntax tree
-- Walks the tree to extract semantic tokens
-- Returns tokens as JSON
+- LSP server built with `OmniSharp.Extensions.LanguageServer`
+- Uses `Microsoft.CodeAnalysis.CSharp` (Roslyn) for semantic analysis
+- Implements `textDocument/semanticTokens/full` capability
+- Extensible handler architecture for future features
+
+### Communication
+- Standard LSP over stdin/stdout
+- JSON-RPC 2.0 protocol (handled automatically by libraries)
+- No custom protocol implementation needed
 
 ## Development
 
@@ -44,14 +50,14 @@ This extension uses a **sidecar architecture** with two components:
 CSharpTools/
 ├── extension/          # VS Code extension (TypeScript)
 │   ├── src/
-│   │   ├── extension.ts    # Entry point, process management
-│   │   ├── provider.ts     # Semantic tokens provider
-│   │   └── utils.ts        # Protocol and validation utilities
+│   │   └── extension.ts    # LSP client setup
 │   └── package.json
 │
-└── analyzer/           # Roslyn analyzer (C#)
+└── analyzer/           # LSP server (C#)
     ├── src/
-    │   ├── Program.cs          # stdin/stdout communication
+    │   ├── Program.cs          # LSP server initialization
+    │   ├── Handlers/
+    │   │   └── SemanticTokensHandler.cs  # Semantic tokens provider
     │   ├── Core/
     │   │   ├── TokenWalker.cs  # Syntax tree visitor
     │   │   └── TokenMapper.cs  # Token legend mapping
@@ -88,11 +94,13 @@ dotnet test
 ## How It Works
 
 1. When you open a `.cs` file, VS Code activates the extension
-2. The extension spawns the backend analyzer process (`dotnet run`)
-3. For each file, the frontend sends the C# code to the backend via stdin
-4. The backend parses the code with Roslyn and extracts semantic tokens
-5. Tokens are returned as JSON and converted to VS Code's format
-6. VS Code applies the semantic highlighting
+2. The extension creates a `LanguageClient` that spawns the LSP server
+3. Client and server perform LSP handshake (`initialize` request)
+4. Server registers its capabilities (semantic tokens support)
+5. When a C# file is opened/edited, VS Code requests semantic tokens
+6. Server parses the code with Roslyn and extracts tokens using `TokenWalker`
+7. Tokens are returned in LSP format and VS Code applies highlighting
+8. All communication, reconnection, and error handling is automatic
 
 ## Token Types
 
@@ -119,37 +127,48 @@ The extension highlights the following C# constructs:
 
 ### Extension doesn't activate
 - Check that .NET SDK 6.0+ is installed: `dotnet --version`
-- Check the Output panel → "Roslyn Syntax Highlighter" for errors
+- Check the Output panel → "Roslyn Semantic Highlighter" for errors
 
 ### No highlighting appears
-- Ensure the backend process started successfully (check Output panel)
-- Try reloading VS Code window (Ctrl+Shift+P → "Reload Window")
+- Ensure the LSP server started successfully (check Output panel)
+- Look for "[INFO] Language server started successfully" message
+- Try reloading VS Code window (Ctrl+Shift-P → "Reload Window")
 
-### Backend crashes
-- The extension will automatically restart the backend with exponential backoff
-- Check stderr output in the Output panel for error details
+### LSP server issues
+- The `LanguageClient` handles reconnection automatically
+- Check Output panel for detailed error messages
+- Verify the analyzer builds: `cd analyzer && dotnet build`
+
+### Configuration warning
+- Warning about "No ConfigurationItems" is harmless and can be ignored
+- It doesn't affect semantic highlighting functionality
 
 ## Documentation
 
 - **[roadmap.md](roadmap.md)** - Project roadmap and future plans
 - **[docs/LEGEND.md](docs/LEGEND.md)** - Token type mappings (critical for development)
-- **[docs/command_protocol_design.md](docs/command_protocol_design.md)** - Future Language Server design
-
-## Contributing
-
-Before contributing:
-1. Read [roadmap.md](roadmap.md) to understand current priorities
-2. Review [docs/LEGEND.md](docs/LEGEND.md) if adding new token types
-3. Ensure tests pass: `dotnet test` (backend) and `npm run compile` (frontend)
-4. Keep C# and TypeScript token legends synchronized
-
-## License
-
-MIT
+- **[docs/lsp_architecture.md](docs/lsp_architecture.md)** - LSP implementation details
 
 ## Contributing
 
 Contributions are welcome! Please ensure:
-- Backend tests pass: `dotnet test`
-- TypeScript compiles without errors: `npm run compile`
-- Token legend stays synchronized between C# and TypeScript (see `LEGEND.md`)
+
+1. **Read the roadmap**: Check [roadmap.md](roadmap.md) to understand current priorities
+2. **Review token mappings**: See [docs/LEGEND.md](docs/LEGEND.md) if adding new token types
+3. **Run tests**: 
+   - Backend: `cd analyzer && dotnet test`
+   - Frontend: `cd extension && npm run compile`
+4. **Keep legends synchronized**: Token types and modifiers must match between C# and TypeScript
+
+### Adding New LSP Capabilities
+
+To add new features (diagnostics, autocompletado, etc.):
+
+1. Create a new handler in `analyzer/src/Handlers/`
+2. Inherit from the appropriate base class (e.g., `CompletionHandlerBase`)
+3. Register in `Program.cs`: `.WithHandler<YourNewHandler>()`
+4. The `LanguageClient` will automatically support the new capability
+
+## License
+
+MIT

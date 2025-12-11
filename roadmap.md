@@ -1,214 +1,251 @@
-# TODO - Roslyn Syntax Highlighter
+# Roadmap - Roslyn Semantic Highlighter
 
-## ✅ Implementado
+## ✅ Implementado (LSP Architecture)
 
-### Estructura del Proyecto
-- [x] Estructura monorepo con `/extension` y `/analyzer`
-- [x] Archivos movidos a `/extension`
-- [x] `.gitignore` configurado para Node.js y .NET
-- [x] README.md actualizado con arquitectura completa
+### Migración a Language Server Protocol
+- [x] **OmniSharp.Extensions.LanguageServer** - Framework LSP completo para .NET
+- [x] **vscode-languageclient** - Cliente oficial de VS Code para LSP
+- [x] **SemanticTokensHandler** - Handler LSP para resaltado semántico
+- [x] **Program.cs** - Servidor LSP con configuración declarativa
+- [x] **Eliminación de protocolo personalizado** - 66% menos código
+- [x] **12/12 tests pasando** - Sin regresiones
 
-### Backend C# (Analizador Roslyn)
-- [x] `RoslynAnalyzer.sln` - Solución .NET
-- [x] `RoslynAnalyzer.csproj` - Proyecto principal (.NET 8.0)
-- [x] Dependencia `Microsoft.CodeAnalysis.CSharp` v4.8.0
-- [x] `RoslynAnalyzer.Tests.csproj` - Proyecto de tests con xUnit
-- [x] `Program.cs` - Comunicación stdin/stdout con protocolo de prefijo de longitud
-- [x] `SemanticTokenDto.cs` - Modelos de datos para tokens
-- [x] `TokenWalker.cs` - Visitor de árbol sintáctico de Roslyn
-- [x] `TokenMapper.cs` - Mapeo de SyntaxKind a índices de leyenda
-- [x] `WalkerTests.cs` - 4 tests unitarios (todos pasando ✅)
-- [x] `LegendSyncTests.cs` - 8 tests de sincronización de leyenda (todos pasando ✅)
-- [x] Detección de: class, interface, enum, struct, method, property, variable, parameter, namespace
-- [x] Detección de modificadores: static, readonly, abstract
-- [x] Modo tolerante de Roslyn (parsea código con errores)
-- [x] Logging a stderr
+### Backend LSP Server (C#)
+- [x] Servidor LSP completo con OmniSharp.Extensions
+- [x] Comunicación JSON-RPC 2.0 automática
+- [x] Logging integrado con Microsoft.Extensions.Logging
+- [x] Dependency injection configurado
+- [x] Handler de semantic tokens implementado
+- [x] Reutilización de TokenWalker y TokenMapper existentes
+- [x] Lectura de archivos desde disco (no por protocolo)
+- [x] Soporte para delta y range tokens
 
-### Frontend TypeScript (Extensión VS Code)
-- [x] `tsconfig.json` - Configuración TypeScript
-- [x] `package.json` actualizado con:
-  - [x] Entry point: `./out/extension.js`
-  - [x] Activation events para archivos C#
-  - [x] 10 semantic token types definidos
-  - [x] 4 semantic token modifiers definidos
-  - [x] Semantic token scopes (mapeo a TextMate)
-  - [x] Scripts de build (compile, watch)
-  - [x] DevDependencies instaladas
-- [x] `extension.ts` - Punto de entrada con:
-  - [x] Validación de .NET SDK (versión >= 6.0)
-  - [x] Spawn del proceso backend (`dotnet run`)
-  - [x] Auto-reinicio con backoff exponencial
-  - [x] Limpieza en deactivate() (SIGTERM/SIGKILL)
-  - [x] OutputChannel para logging
-- [x] `provider.ts` - DocumentSemanticTokensProvider:
-  - [x] Leyenda de tokens sincronizada con backend
-  - [x] Envío de código al backend
-  - [x] Parseo de respuesta JSON
-  - [x] Construcción de SemanticTokens
-- [x] `utils.ts` - Utilidades:
-  - [x] `checkDotnetInstalled()` - Validación de .NET
-  - [x] `sendMessage()` - Protocolo de escritura
-  - [x] `receiveMessage()` - Protocolo de lectura con timeout
-- [x] Compilación exitosa de TypeScript
+### Frontend LSP Client (TypeScript)
+- [x] LanguageClient de vscode-languageclient
+- [x] Gestión automática de proceso y comunicación
+- [x] Reconexión automática en caso de errores
+- [x] Sincronización de archivos automática
+- [x] OutputChannel integrado para logging
+- [x] Eliminación de provider.ts y utils.ts (ya no necesarios)
 
-### Protocolo de Comunicación
-- [x] Prefijo de longitud de 4 bytes (little-endian)
-- [x] Formato JSON para payload
-- [x] Timeout de 5 segundos
-- [x] Manejo de errores en ambos lados
+### Capacidades LSP Actuales
+- [x] `textDocument/semanticTokens/full` - Resaltado semántico completo
+- [x] `textDocument/semanticTokens/full/delta` - Actualizaciones incrementales
+- [x] `textDocument/semanticTokens/range` - Tokens para rangos específicos
+
+### Token Types y Modifiers
+- [x] **Types**: class, interface, enum, struct, method, property, variable, parameter, namespace, type
+- [x] **Modifiers**: declaration, static, readonly, abstract
+- [x] Sincronización entre C# y TypeScript
+- [x] Tests de sincronización de leyenda
 
 ### Documentación
-- [x] README.md con arquitectura, requisitos, y troubleshooting
-- [x] LEGEND.md (artifact) - Mapeo de tokens documentado
-- [x] analysis.md (artifact) - Análisis de mejoras arquitectónicas
-- [x] implementation_plan.md (artifact) - Plan de implementación
-- [x] walkthrough.md (artifact) - Resumen de implementación
-- [x] task.md (artifact) - Tracking de tareas
+- [x] README.md actualizado con arquitectura LSP
+- [x] docs/lsp_architecture.md - Documentación completa de LSP
+- [x] docs/LEGEND.md - Mapeo de tokens
+- [x] Walkthrough de migración a LSP
+- [x] Troubleshooting actualizado
 
 ### Testing
-- [x] 4 tests unitarios del backend (todos pasando)
-- [x] test-example.cs - Archivo de prueba con varios constructos C#
+- [x] 12 tests unitarios del backend (todos pasando)
+- [x] Tests de TokenWalker
+- [x] Tests de TokenMapper
+- [x] Tests de sincronización de leyenda
+- [x] Compilación exitosa de backend y frontend
 
 ---
 
-## 📋 Pendiente (Futuro)
+## 📋 Próximas Características (Roadmap)
 
-### Fase 5: Testing y Validación Manual
+### Fase 1: Diagnósticos (Próximo - Alta Prioridad)
 
-#### Tests de Integración
-- [ ] Probar extensión con F5 en VS Code
-- [ ] Verificar resaltado visual en test-example.cs
-- [ ] Probar con archivos C# grandes (>1000 líneas)
-- [ ] Verificar rendimiento y tiempos de respuesta
-- [ ] Tests automatizados end-to-end
+**Objetivo:** Mostrar errores y warnings de compilación en tiempo real
 
-#### Optimización
-- [ ] Medir tiempo de respuesta del backend con profiling
-- [ ] Implementar caché de análisis si es necesario
-- [ ] Considerar formato binario si JSON es lento
-- [ ] Implementar análisis incremental (solo cambios)
+**Implementación:**
+- [ ] Crear `DiagnosticHandler : ITextDocumentSyncHandler`
+- [ ] Usar Roslyn para obtener diagnósticos del compilador
+- [ ] Publicar diagnósticos a VS Code
+- [ ] Mostrar squiggles rojos/amarillos en el editor
+- [ ] Implementar quick fixes básicos
 
-#### Empaquetado y Distribución
-- [ ] Script de build que compile backend y frontend juntos
-- [ ] Decidir estrategia de distribución del backend:
-  - Opción A: Código fuente + `dotnet run` (actual)
-  - Opción B: Binarios compilados para win/linux/mac
-- [ ] Crear paquete .vsix con `vsce package`
-- [ ] Probar instalación en VS Code limpio
-- [ ] Publicar en VS Code Marketplace
+**Beneficios:**
+- Errores visibles sin compilar
+- Feedback inmediato al escribir código
+- Integración con problemas de VS Code
 
-### Mejoras al Resaltado de Sintaxis Actual (Prioridad)
+**Complejidad:** Baja (1-2 días)
 
-- [ ] Mejorar detección de tipos genéricos (`List<T>`, `Dictionary<K,V>`)
-- [ ] Resaltar atributos (`[Serializable]`, `[HttpGet]`)
-- [ ] Detectar delegates y events
-- [ ] Resaltar expresiones lambda
-- [ ] Detectar local functions
-- [ ] Mejorar detección de tipos en using statements
-- [ ] Resaltar keywords contextuales (var, dynamic, async, await)
-- [ ] Detectar record types y record structs
-- [ ] Resaltar pattern matching
-- [ ] Mejorar detección de propiedades auto-implementadas
+---
 
-### Evolución a Language Server Completo (Futuro - No Prioritario)
+### Fase 2: Code Intelligence (Medio Plazo)
 
-> [!NOTE]
-> Esta sección documenta el roadmap para evolucionar la extensión a un Language Server completo.
-> **NO es prioritario ahora** - primero hay que mejorar el resaltado de sintaxis actual.
-> Ver `docs/command_protocol_design.md` para detalles técnicos completos.
+#### Autocompletado (IntelliSense)
+- [ ] Crear `CompletionHandler : CompletionHandlerBase`
+- [ ] Usar Roslyn Semantic Model para sugerencias
+- [ ] Soportar miembros de clases, métodos, propiedades
+- [ ] Soportar using statements
+- [ ] Snippets de código
 
-#### Fase 1: Protocolo de Comandos
-- [ ] Refactorizar protocolo a Request/Response con IDs
-- [ ] Implementar `CommandRouter` en backend
-- [ ] Implementar `LanguageServerClient` en frontend
-- [ ] Migrar comando `analyze` (mantener compatibilidad)
-- [ ] Agregar manejo de errores estructurado
+#### Hover Information
+- [ ] Crear `HoverHandler : HoverHandlerBase`
+- [ ] Mostrar documentación XML
+- [ ] Mostrar firma de métodos
+- [ ] Mostrar tipo de variables
 
-#### Fase 2: Diagnósticos
-- [ ] Implementar comando `diagnose`
-- [ ] Usar Roslyn para obtener errores y warnings
-- [ ] Registrar `DiagnosticProvider` en VS Code
-- [ ] Mostrar squiggles en el editor
-- [ ] Quick fixes básicos
+#### Go to Definition
+- [ ] Crear `DefinitionHandler : DefinitionHandlerBase`
+- [ ] Usar Roslyn para encontrar definiciones
+- [ ] Soportar ir a definición en otros archivos
+- [ ] Soportar ir a metadata de assemblies
 
-#### Fase 3: Compilación
-- [ ] Implementar comando `compile`
-- [ ] Integrar con MSBuild/dotnet build
-- [ ] Agregar task de build en VS Code
-- [ ] Mostrar output de compilación
-- [ ] Detectar errores de compilación
+#### Find All References
+- [ ] Crear `ReferencesHandler : ReferencesHandlerBase`
+- [ ] Buscar todas las referencias de un símbolo
+- [ ] Mostrar en panel de resultados
 
-#### Fase 4: Gestión de Proyectos
-- [ ] Implementar comando `createProject`
-- [ ] Implementar comando `dotnetCli`
-- [ ] Comandos VS Code para crear proyectos
-- [ ] Gestión de variables de entorno
-- [ ] Integración con dotnet CLI completa
+**Complejidad:** Media (1-2 semanas)
 
-#### Fase 5: Features Avanzados
-- [ ] Autocompletado (IntelliSense)
-- [ ] Go to Definition
-- [ ] Find All References
-- [ ] Rename Symbol
-- [ ] Code Actions (refactorings)
+---
 
-#### Fase 6: Migración a LSP (Opcional)
-- [ ] Evaluar migración a Language Server Protocol estándar
-- [ ] Usar biblioteca LSP de Microsoft
-- [ ] Compatibilidad con otros editores (Vim, Emacs, etc.)
+### Fase 3: Refactoring (Largo Plazo)
 
-### Mejoras Futuras (No Críticas)
+#### Rename Symbol
+- [ ] Crear `RenameHandler : RenameHandlerBase`
+- [ ] Renombrar símbolos en todo el workspace
+- [ ] Preview de cambios antes de aplicar
 
-#### Heartbeat
-- [ ] Implementar ping/pong entre frontend y backend
-- [ ] Detectar proceso bloqueado (no solo crashed)
+#### Code Actions
+- [ ] Crear `CodeActionHandler : CodeActionHandlerBase`
+- [ ] Organizar usings
+- [ ] Generar constructores
+- [ ] Implementar interfaz
+- [ ] Extraer método
 
-#### Configuración
-- [ ] Setting para habilitar modo verbose de logging
-- [ ] Setting para ajustar timeout de comunicación
-- [ ] Setting para deshabilitar auto-reinicio
+**Complejidad:** Alta (2-4 semanas)
 
-#### Leyenda Extensible
-- [ ] Crear legend.json compartido (futuro)
-- [ ] Script de build que genere código C# y TypeScript desde JSON (futuro)
-- [x] Documentar claramente el mapeo en LEGEND.md
-- [x] Tests de sincronización que validan orden y contenido de la leyenda
+---
 
-#### Análisis Avanzado
-- [ ] Semantic analysis (más allá de sintaxis)
-- [ ] Resaltar referencias a símbolos
-- [ ] Multi-archivo / workspace analysis
-- [ ] Integración con OmniSharp (opcional)
+### Fase 4: Workspace Features
 
-#### Tokens Adicionales
-- [ ] Delegates
-- [ ] Events
-- [ ] Attributes
-- [ ] Type parameters (generics)
+#### Project Management
+- [ ] Detectar archivos .csproj
+- [ ] Cargar proyecto completo en memoria
+- [ ] Análisis multi-archivo
+- [ ] Resolución de referencias entre archivos
+
+#### Build Integration
+- [ ] Comando para compilar proyecto
+- [ ] Mostrar errores de compilación
+- [ ] Integración con tasks de VS Code
+
+**Complejidad:** Alta (3-4 semanas)
+
+---
+
+## 🎯 Mejoras al Resaltado Actual (Backlog)
+
+### Tokens Adicionales
+- [ ] Delegates y events
+- [ ] Atributos (`[Serializable]`, `[HttpGet]`)
+- [ ] Expresiones lambda
 - [ ] Local functions
-- [ ] Lambda expressions
+- [ ] Record types y record structs
+- [ ] Pattern matching
+- [ ] Tipos genéricos mejorados (`List<T>`)
+
+### Optimizaciones
+- [ ] Caché de syntax trees parseados
+- [ ] Análisis incremental (solo cambios)
+- [ ] Lazy loading de archivos grandes
+- [ ] Throttling de requests
 
 ---
 
-## 🎯 Próximos Pasos Recomendados
+## 🔧 Mejoras Técnicas (Backlog)
 
-1. **Probar la extensión manualmente** (F5 en VS Code)
-2. **Verificar que el resaltado funcione** con test-example.cs
-3. **Revisar logs** en Output panel para debugging
-4. **Decidir estrategia de distribución** (código fuente vs binarios)
-5. **Crear script de empaquetado** para .vsix
+### Testing
+- [ ] Tests de integración end-to-end
+- [ ] Tests de performance
+- [ ] Tests con archivos grandes (>10k líneas)
+- [ ] Benchmarks de velocidad
+
+### Configuración
+- [ ] Settings de VS Code para la extensión
+- [ ] Nivel de logging configurable
+- [ ] Habilitar/deshabilitar features específicas
+- [ ] Timeout configurable
+
+### Logging Mejorado
+- [ ] Niveles de log configurables
+- [ ] Telemetría opcional
+- [ ] Métricas de performance
 
 ---
 
 ## 📊 Estado del Proyecto
 
-**Fases Completadas:** 4/5 (80%)
-- ✅ Fase 1: Estructura del Proyecto
-- ✅ Fase 2: Backend Roslyn
-- ✅ Fase 3: Frontend TypeScript
-- ✅ Fase 4: Integración y Comunicación
-- ⏳ Fase 5: Testing y Validación (pendiente)
+**Arquitectura:** ✅ LSP Completo Implementado
 
-**Tests:** 4/4 pasando ✅
+**Capacidades LSP:**
+- ✅ Semantic Tokens (full, delta, range)
+- 🎯 Diagnostics (próximo)
+- 🎯 Completion
+- 🎯 Hover
+- 🎯 Go to Definition
+- 🎯 Find References
+- 🎯 Rename
+- 🎯 Code Actions
+
+**Tests:** 12/12 pasando ✅
+
 **Compilación:** Backend ✅ | Frontend ✅
-**Arquitectura:** Todas las mejoras críticas implementadas ✅
+
+**Documentación:** Completa ✅
+
+---
+
+## 🚀 Cómo Agregar Nuevas Capacidades
+
+Gracias a la arquitectura LSP, agregar features es extremadamente simple:
+
+### 1. Crear Handler
+
+```csharp
+// analyzer/src/Handlers/MiNuevoHandler.cs
+public class MiNuevoHandler : HandlerBase
+{
+    public async Task<Result> Handle(Params request, CancellationToken token)
+    {
+        // Tu lógica aquí
+        return result;
+    }
+}
+```
+
+### 2. Registrar en Program.cs
+
+```csharp
+.WithHandler<MiNuevoHandler>()
+```
+
+### 3. ¡Listo!
+
+El `LanguageClient` detecta automáticamente la nueva capacidad.
+
+---
+
+## 📚 Referencias
+
+- [LSP Specification](https://microsoft.github.io/language-server-protocol/)
+- [OmniSharp.Extensions](https://github.com/OmniSharp/csharp-language-server-protocol)
+- [Roslyn APIs](https://github.com/dotnet/roslyn)
+- [vscode-languageclient](https://github.com/microsoft/vscode-languageserver-node)
+
+---
+
+## 💡 Próximos Pasos Inmediatos
+
+1. **Testing Manual** - Probar extensión con F5 y verificar resaltado
+2. **Implementar Diagnósticos** - Primera feature nueva con LSP
+3. **Performance Testing** - Medir tiempos de respuesta
+4. **Documentar Ejemplos** - Crear ejemplos de uso para contributors

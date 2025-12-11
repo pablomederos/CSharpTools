@@ -15,27 +15,6 @@
     "Programming Languages"
   ],
   "contributes": {
-    "languages": [
-      {
-        "id": "csharp",
-        "aliases": [
-          "Visual C Sharp",
-          "csharp"
-        ],
-        "extensions": [
-          "cs",
-          "csx"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "csharp",
-        "scopeName": "source.cs",
-        "path": "./syntaxes/csharp.tmLanguage.json"
-      }
-    ],
     "semanticTokenTypes": [
       {
         "id": "class",
@@ -144,5 +123,8 @@
     "@types/vscode": "^1.106.1",
     "@types/node": "^20.x",
     "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
   }
 }
